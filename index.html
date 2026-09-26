@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EcoBuddy</title>
+<meta name="description" content="אפליקציית מחזור בקבוקי פלסטיק עם מפה אמיתית, סריקת QR במצלמה וצ'אט EcoBuddy מבוסס AI.">
+<meta name="theme-color" content="#0F5C56">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230F5C56'/%3E%3Cpath d='M78 18C38 18 18 38 18 70c30 0 52-22 52-52Z' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M26 70c14-14 28-28 52-52' fill='none' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230F5C56'/%3E%3Cpath d='M78 18C38 18 18 38 18 70c30 0 52-22 52-52Z' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M26 70c14-14 28-28 52-52' fill='none' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4C10 4 4 10 4 18c8 0 14-6 14-14Z"/><path d="M6 18c4-4 8-8 14-14"/></svg>
+      </div>
+      <div class="brand-name">EcoBuddy</div>
+    </div>
+    <div class="topbar-stats">
+      <div class="chip streak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1.5-1-2-1-3.5 2 1 3 3.5 3 5.5a5 5 0 0 1-10 0c0-5 3-7 5-11Z"/></svg><span id="topbar-streak" class="num">0</span></div>
+      <div class="chip points"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.3 9.6c0-1.4 1.2-2.4 2.7-2.4s2.7 1 2.7 2c0 2.6-5.4 1.6-5.4 4.2 0 1.2 1.2 2.1 2.7 2.1s2.7-.9 2.7-2.1"/></svg><span id="topbar-points" class="num">0</span></div>
+    </div>
+  </header>
+
+  <main id="screens">
+
+    <!-- HOME -->
+    <section class="screen active" id="screen-home">
+      <div>
+        <div class="eyebrow" id="home-date"></div>
+        <h1 class="greeting" id="home-greeting">היי</h1>
+        <div class="sub">מפה חיה של נקודות מחזור אמיתיות בקרבתך (תל אביב-יפו, נתונים פתוחים)</div>
+      </div>
+
+      <div class="banner" id="loc-banner"><span class="dot"></span><span id="loc-banner-text">מאתר מיקום…</span><button id="loc-retry" hidden>נסה שוב</button></div>
+
+      <div class="map-card">
+        <div id="leaflet-map"></div>
+      </div>
+
+      <div class="card nearest-card" id="nearest-card" hidden>
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.3"/></svg></div>
+        <div class="meta">
+          <div class="name" id="nearest-name">—</div>
+          <div class="dist">נקודת המחזור הקרובה ביותר</div>
+        </div>
+        <div class="pill-dist" id="nearest-dist">—</div>
+      </div>
+      <div class="banner warn" id="no-bins-banner" hidden><span class="dot"></span><span>לא נמצאו נקודות מהמאגר הפתוח בקרבתך. אפשר להוסיף נקודות ידנית בעמוד הפרופיל.</span></div>
+
+      <button class="btn btn-accent btn-block" id="home-scan-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14v2M14 19h2M19 19h2"/></svg>
+        סרוק בקבוק עכשיו
+      </button>
+
+      <div>
+        <div class="eyebrow" style="margin-bottom:8px;">עוד נקודות מחזור בקרבתך</div>
+        <div class="points-list" id="points-list"></div>
+      </div>
+    </section>
+
+    <!-- REWARDS -->
+    <section class="screen" id="screen-rewards">
+      <h1 style="font-size:22px;">תגמולים</h1>
+      <div class="points-banner">
+        <div><div class="lbl">היתרה שלך</div><div class="big num" id="rewards-points">0</div></div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:46px;height:46px;opacity:.85"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.3 9.6c0-1.4 1.2-2.4 2.7-2.4s2.7 1 2.7 2c0 2.6-5.4 1.6-5.4 4.2 0 1.2 1.2 2.1 2.7 2.1s2.7-.9 2.7-2.1"/></svg>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;" id="rewards-list"></div>
+    </section>
+
+    <!-- LEADERBOARD -->
+    <section class="screen" id="screen-leaderboard">
+      <h1 style="font-size:22px;">לוח מובילים</h1>
+      <div class="lb-note">לוח לדוגמה — עדיין ללא שרת/משתמשים אמיתיים. כשנוסיף בקאנד אמיתי זה יתחלף בחברים אמיתיים.</div>
+      <div class="lb-note" id="lb-note">טוען...</div>
+      <div class="card" style="padding:8px; display:flex; flex-direction:column; gap:2px;" id="lb-list"></div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="screen" id="screen-profile">
+      <h1 style="font-size:22px;">הפרופיל שלי</h1>
+      <div class="stat-grid">
+        <div class="stat-tile"><div class="v num" id="p-points">0</div><div class="l">נקודות</div></div>
+        <div class="stat-tile"><div class="v num" id="p-bottles">0</div><div class="l">בקבוקים</div></div>
+        <div class="stat-tile"><div class="v num" id="p-streak">0</div><div class="l">ימי רצף</div></div>
+      </div>
+
+      <div class="card">
+        <div class="eyebrow" style="margin-bottom:10px;">7 הימים האחרונים</div>
+        <div class="cal" id="cal"></div>
+      </div>
+
+      <div>
+        <div class="eyebrow" style="margin-bottom:8px;">סמלים</div>
+        <div class="badges" id="badges"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-head" style="margin-bottom:10px;">
+          <h3 style="font-size:15px;">נקודות מחזור שהוספתי</h3>
+        </div>
+        <div class="sub" style="margin-bottom:10px;">המאגר הפתוח מכסה כרגע רק את תל אביב-יפו. פח מחוץ לאזור? הוסף אותו ידנית והוא ייכנס למפה ולסריקות.</div>
+        <div id="custom-bins-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;"></div>
+        <div class="field"><label>שם / כתובת</label><input type="text" id="cb-name" placeholder="לדוגמה: פח כתום ליד הבית"></div>
+        <div style="display:flex; gap:8px;">
+          <div class="field" style="flex:1;"><label>קו רוחב (lat)</label><input type="text" id="cb-lat" placeholder="32.0853"></div>
+          <div class="field" style="flex:1;"><label>קו אורך (lon)</label><input type="text" id="cb-lon" placeholder="34.7818"></div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="cb-use-location">השתמש במיקום הנוכחי שלי</button>
+          <button class="btn btn-primary btn-sm" id="cb-add">הוסף נקודה</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px; margin-bottom:10px;">הגדרות EcoBuddy AI</h3>
+        <div class="sub" style="margin-bottom:10px;">אופציונלי: הדבק מפתח Anthropic API אישי כדי ש-EcoBuddy יענה עם AI אמיתי במקום הודעות מוכנות מראש. המפתח נשמר רק בדפדפן שלך ולא נשלח לשום מקום חוץ מ-api.anthropic.com.</div>
+        <div class="field"><label>Anthropic API Key</label><input type="password" id="settings-api-key" placeholder="sk-ant-..."></div>
+        <div class="field"><label>Model ID</label><input type="text" id="settings-model" placeholder="claude-haiku-4-5-20251001"><div class="hint">רשימת מודלים עדכנית: docs.claude.com/en/docs/about-claude/models</div></div>
+        <div class="switch-row">
+          <span style="font-size:13.5px; font-weight:600;">שימוש ב-AI אמיתי</span>
+          <label class="switch"><input type="checkbox" id="settings-use-ai"><span class="knob"></span></label>
+        </div>
+        <button class="btn btn-ghost btn-block" id="settings-save" style="margin-top:10px;">שמור הגדרות</button>
+      </div>
+
+      <button class="btn btn-danger btn-block" id="reset-btn">איפוס נתוני דמו</button>
+    </section>
+
+  </main>
+
+  <!-- EcoBuddy FAB -->
+  <button class="eco-fab" id="eco-fab" aria-label="EcoBuddy">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4C10 4 4 10 4 18c8 0 14-6 14-14Z"/><path d="M6 18c4-4 8-8 14-14"/></svg>
+    <span class="spark">AI</span>
+  </button>
+
+  <!-- EcoBuddy chat sheet -->
+  <div class="sheet-overlay" id="eco-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="who">
+          <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4C10 4 4 10 4 18c8 0 14-6 14-14Z"/><path d="M6 18c4-4 8-8 14-14"/></svg></div>
+          <div><div class="name">EcoBuddy</div><div class="focus" id="eco-focus">—</div></div>
+        </div>
+        <button class="icon-btn" id="eco-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
+      </div>
+      <div class="chat-body" id="chat-body"></div>
+      <div class="chips" id="chat-chips"></div>
+      <div class="chat-input">
+        <input id="chat-text" type="text" placeholder="כתוב הודעה ל-EcoBuddy…" autocomplete="off">
+        <button id="chat-send" aria-label="שלח"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12 20 4l-6 16-3-7-7-1Z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- scan sheet -->
+  <div class="sheet-overlay" id="scan-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="who"><div class="name">סריקת בקבוק</div></div>
+        <button class="icon-btn" id="scan-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
+      </div>
+      <div class="scan-stage">
+        <div class="scan-frame" id="scan-frame">
+          <video id="scan-video" playsinline muted></video>
+          <div class="scan-line" id="scan-line"></div>
+          <div class="overlay" id="scan-overlay-msg" hidden></div>
+        </div>
+        <div>
+          <div class="scan-msg" id="scan-msg">מבקש הרשאת מצלמה…</div>
+          <div class="scan-sub" id="scan-sub">כוון את המצלמה לקוד ה-QR שעל הפח</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="scan-demo-btn">אין מדבקה עדיין? הדגמה על הפח הקרוב</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- sticker sheet -->
+  <div class="sheet-overlay" id="sticker-overlay" hidden>
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="who"><div class="name">מדבקת QR לפח</div></div>
+        <button class="icon-btn" id="sticker-close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l14 14M19 5 5 19"/></svg></button>
+      </div>
+      <div class="sheet-scroll">
+        <div class="sub" style="margin-bottom:12px;">הדפס והדבק בסמוך לפח לצורך הרצה אישית — זה לא הקוד הרשמי של הרשות, אלא מדבקה שאתה יוצר לבדיקה עצמית.</div>
+        <div class="sticker-box" id="print-area">
+          <div id="qr-canvas-holder" class="qr-canvas"></div>
+          <div class="s-name" id="sticker-name">—</div>
+          <div class="s-sub">EcoBuddy · מדבקת בדיקה אישית</div>
+        </div>
+        <button class="btn btn-primary btn-block" id="sticker-print" style="margin-top:14px;">הדפס מדבקה</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg>
+      בית
+    </button>
+    <button class="nav-btn" data-tab="rewards">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="16" height="11" rx="1.2"/><path d="M4 9h16v3.4H4z"/><path d="M12 9v11"/><path d="M12 9c-1.4-3-5-3.3-5-1.2S9 9 12 9Z"/><path d="M12 9c1.4-3 5-3.3 5-1.2S15 9 12 9Z"/></svg>
+      תגמולים
+    </button>
+    <button class="scan-fab" id="nav-scan-btn" aria-label="סרוק">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM19 14v2M14 19h2M19 19h2"/></svg>
+    </button>
+    <button class="nav-btn" data-tab="leaderboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4v2a3 3 0 0 0 3 3"/><path d="M17 5h3v2a3 3 0 0 1-3 3"/><path d="M12 13v4"/><path d="M9 20h6"/><path d="M10 17h4v3h-4z"/></svg>
+      מובילים
+    </button>
+    <button class="nav-btn" data-tab="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.4-4.2 5-6.2 8-6.2s6.6 2 8 6.2"/></svg>
+      פרופיל
+    </button>
+  </nav>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
